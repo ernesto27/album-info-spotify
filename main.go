@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bufio"
+	"album-info-spotify/spotify"
 	"encoding/json"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/godbus/dbus"
 )
 
 type Album struct {
@@ -30,32 +31,15 @@ var nameBand string
 var albumBand string
 
 func main() {
-
 	if len(os.Args) < 3 {
-		// Check if python is available
-		// CHeck error python
-
-		// If no params passed check current spotify album playing
-		cmd := exec.Command("python", "getAlbumSpotify.py")
-		stdout, err := cmd.StdoutPipe()
+		conn := getConn()
+		var meta *spotify.SpotifyMetadata
+		meta, err := spotify.GetMetadataSpotify(conn)
 		if err != nil {
-			panic(err)
+			log.Fatalf("failed getting metadata, err: %s", err.Error())
 		}
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			panic(err)
-		}
-		err = cmd.Start()
-		if err != nil {
-			panic(err)
-		}
-
-		go copyOutput(stdout)
-		go copyOutput(stderr)
-		cmd.Wait()
-
-		nameBand = strings.ReplaceAll(nameBand, " ", "%20")
-		albumBand = strings.ReplaceAll(albumBand, " ", "%20")
+		nameBand = strings.ReplaceAll(meta.Artist[0], " ", "%20")
+		albumBand = strings.ReplaceAll(meta.Album, " ", "%20")
 
 		// fmt.Println("You have to pass bandName and albumName arguments")
 		// fmt.Println("$ go run main.go megadeth 'rust in peace' ")
@@ -114,15 +98,10 @@ func getJson(url string, target interface{}) error {
 	return json.NewDecoder(r.Body).Decode(target)
 }
 
-func copyOutput(r io.Reader) {
-	scanner := bufio.NewScanner(r)
-	index := 0
-	for scanner.Scan() {
-		if index == 0 {
-			nameBand = scanner.Text()
-		} else if index == 1 {
-			albumBand = scanner.Text()
-		}
-		index += 1
+func getConn() *dbus.Conn {
+	conn, err := dbus.SessionBus()
+	if err != nil {
+		log.Fatal(err)
 	}
+	return conn
 }
