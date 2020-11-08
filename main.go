@@ -36,6 +36,7 @@ func main() {
 		var meta *spotify.SpotifyMetadata
 		meta, err := spotify.GetMetadataSpotify(conn)
 		if err != nil {
+			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
 			log.Fatalf("failed getting metadata, err: %s", err.Error())
 		}
 		nameBand = strings.ReplaceAll(meta.Artist[0], " ", "%20")
