@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,8 +39,19 @@ type ResponseAlbum struct {
 	Album []Album
 }
 
+type Track struct {
+	Description string `json:"strDescriptionEN"`
+	YoutubeURL  string `json:"strMusicVid"`
+}
+
+type ResposeTrack struct {
+	Track []Track `json:"track"`
+}
+
+var apiURL string = "https://www.theaudiodb.com/api/v1/json/1/"
 var nameBand string
 var albumBand string
+var trackName string
 
 func main() {
 	if len(os.Args) < 3 {
@@ -50,9 +62,14 @@ func main() {
 			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
 			log.Fatalf("failed getting metadata, err: %s", err.Error())
 		}
+
+		trackName = strings.ReplaceAll(meta.Title, " ", "%20")
 		nameBand = strings.ReplaceAll(meta.Artist[0], " ", "%20")
 		albumBand = strings.ReplaceAll(meta.Album, " ", "%20")
 
+		m := regexp.MustCompile("\\(.*\\)")
+		albumBand = m.ReplaceAllString(albumBand, "")
+		albumBand = strings.Trim(albumBand, "%20")
 		// fmt.Println("You have to pass bandName and albumName arguments")
 		// fmt.Println("$ go run main.go megadeth 'rust in peace' ")
 		// os.Exit(1)
@@ -65,7 +82,8 @@ func main() {
 	}
 
 	album := new(ResponseAlbum)
-	getJson("https://www.theaudiodb.com/api/v1/json/1/searchalbum.php?s="+nameBand+"&a="+albumBand, album)
+	fmt.Println(apiURL + "searchalbum.php?s=" + nameBand + "&a=" + albumBand)
+	getJson(apiURL+"searchalbum.php?s="+nameBand+"&a="+albumBand, album)
 	if len(album.Album) == 0 {
 		fmt.Println("Album not found :(")
 		fmt.Println(nameBand + " - " + albumBand)
@@ -99,7 +117,7 @@ func main() {
 
 	// BAND INFO
 	var band = new(ResponseBand)
-	getJson("https://www.theaudiodb.com/api/v1/json/1/search.php?s="+nameBand, band)
+	getJson(apiURL+"search.php?s="+nameBand, band)
 	fmt.Println("BAND INFO:")
 	fmt.Println(band.Band[0].Biograhpy)
 	fmt.Println()
@@ -109,18 +127,19 @@ func main() {
 	fmt.Println()
 
 	// TRACK DESCRIPTION
-	// fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
-	// fmt.Println()
-	// fmt.Println("TRACK DESCRIPTION:")
-	// fmt.Println("Description: Some description")
+	var track = new(ResposeTrack)
+	getJson(apiURL+"searchtrack.php?s="+nameBand+"&t="+trackName, track)
+	if track.Track != nil {
+		fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
+		fmt.Println()
+		fmt.Println("TRACK DESCRIPTION:")
+		fmt.Println(track.Track[0].Description)
 
-	// fmt.Println()
-	// fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
-	// fmt.Println()
+		fmt.Println()
 
-	// fmt.Println("TRACK YOUTUBE URL:")
-	// fmt.Println("http://youtube.com/fkldjfdlkf")
-
+		fmt.Println("TRACK YOUTUBE URL:")
+		fmt.Println(track.Track[0].YoutubeURL)
+	}
 }
 
 var myClient = &http.Client{Timeout: 10 * time.Second}
