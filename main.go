@@ -13,6 +13,17 @@ import (
 	"github.com/godbus/dbus"
 )
 
+type Band struct {
+	Name       string `json:"strArtist"`
+	Biograhpy  string `json:"strBiographyEN"`
+	FormedYear string `json:"intFormedYear"`
+	Country    string `json:"strCountry"`
+}
+
+type ResponseBand struct {
+	Band []Band `json:"artists"`
+}
+
 type Album struct {
 	Artist      string `json:"strArtist"`
 	Name        string `json:"strAlbum"`
@@ -57,6 +68,7 @@ func main() {
 	getJson("https://www.theaudiodb.com/api/v1/json/1/searchalbum.php?s="+nameBand+"&a="+albumBand, album)
 	if len(album.Album) == 0 {
 		fmt.Println("Album not found :(")
+		fmt.Println(nameBand + " - " + albumBand)
 		os.Exit(1)
 	}
 
@@ -70,20 +82,44 @@ func main() {
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
 	fmt.Println()
 
-	fmt.Println("DESCRIPTION:")
+	fmt.Println("ALBUM DESCRIPTION:")
 	fmt.Println(string(album.Album[0].Description))
 
-	fmt.Println()
-	fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
-	fmt.Println()
-
 	if album.Album[0].Review != "" {
+		fmt.Println()
+		fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
+		fmt.Println()
 		fmt.Println("REVIEW:")
 		fmt.Println(string(album.Album[0].Review))
 	}
 
 	fmt.Println()
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
+	fmt.Println()
+
+	// BAND INFO
+	var band = new(ResponseBand)
+	getJson("https://www.theaudiodb.com/api/v1/json/1/search.php?s="+nameBand, band)
+	fmt.Println("BAND INFO:")
+	fmt.Println(band.Band[0].Biograhpy)
+	fmt.Println()
+	fmt.Println("YEAR: " + band.Band[0].FormedYear)
+	fmt.Println()
+	fmt.Println("COUNTRY: " + band.Band[0].Country)
+	fmt.Println()
+
+	// TRACK DESCRIPTION
+	// fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
+	// fmt.Println()
+	// fmt.Println("TRACK DESCRIPTION:")
+	// fmt.Println("Description: Some description")
+
+	// fmt.Println()
+	// fmt.Println("----------------------------------------------------------------------------------------------------------------------------------------")
+	// fmt.Println()
+
+	// fmt.Println("TRACK YOUTUBE URL:")
+	// fmt.Println("http://youtube.com/fkldjfdlkf")
 
 }
 
