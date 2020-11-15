@@ -68,6 +68,11 @@ func GetAlbumInfo(nameBand string, albumBand string) ([]string, error) {
 		album.Album[0].ThumbCD,
 		album.Album[0].Description,
 		album.Album[0].Review,
+		album.Album[0].Artist,
+		album.Album[0].Name,
+		album.Album[0].ReleaseYear,
+		album.Album[0].Style,
+		album.Album[0].Label,
 	}
 	return resp, nil
 }
@@ -95,6 +100,7 @@ func GetTrackInfo(nameBand string, trackName string) ([]string, error) {
 		track.Track[0].Description,
 		idVideo,
 		track.Track[0].Thumb,
+		track.Track[0].YoutubeURL,
 	}
 
 	return resp, nil

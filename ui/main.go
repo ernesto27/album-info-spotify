@@ -62,7 +62,6 @@ func main() {
 		fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
 		log.Fatalf("failed getting metadata, err: %s", err.Error())
 	}
-	fmt.Println(meta)
 
 	albumInfo, err := client.GetAlbumInfo(meta.Artist[0], meta.Album)
 	if err != nil {
