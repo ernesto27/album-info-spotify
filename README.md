@@ -5,22 +5,46 @@ This is a simple command line app that shows info of the current playing album l
 ## Install
 NOTE: Only tested on ubuntu 18.04 and above
 
-Go to releases page and download file "album-info-spotify".
+### Desktop app
+Go to releases page and download file "ui-spotify-info".
 
 Make file executable
 ```sh
-$ chmod +x album-info-spotify
+$ chmod +x cmd-spotify-info
 ```
 
-## Use
+#### Use
+```sh
+$ ./ui-spotify-info
+```
+
+![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-14-34.png)
+
+
+
+![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-14-55.png)
+
+
+
+### Command line app
+Go to releases page and download file "cmd-spotify-info".
+
+Make file executable
+```sh
+$ chmod +x cmd-spotify-info
+```
+
+#### Use
 
 If you want to have info about a current playing song on spotify desktop app
 ```sh
-$ ./album-info-spotify
+$ ./cmd-spotify-info
 ```
 
 Info about a spececific album
 
 ```sh
-$ ./album-info-spotify "megadeth" "rust in peace"
+$ ./cmd-spotify-info "megadeth" "rust in peace"
 ```
+
+![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-15-29.png)
