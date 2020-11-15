@@ -11,6 +11,49 @@ import (
 	"github.com/zserge/lorca"
 )
 
+func renderImage(imageURL string) string {
+	if imageURL == "" {
+		return ""
+	}
+	return `<div class="col-md-4">
+		<img src="` + imageURL + `" class="img-fluid img-thumbnail" alt="">
+	</div>`
+}
+
+func renderReview(text string) string {
+	if text == "" {
+		return ""
+	}
+	return `<p class="font-weight-bold">Review album: </p>
+			<p class="text-justify">` + text + `</p> `
+}
+
+func renderTrackInfo(text string, videoURL string, thumb string) string {
+	var resp string = ""
+	if text != "" {
+		resp += `
+		<h3>Track info</h3>
+		<p class="text-justify">` + text + `</p>`
+	}
+
+	if thumb != "" {
+		resp += `
+		<div class="row">
+			<div class="col-md-4">
+				<img src="` + thumb + `" class="img-fluid img-thumbnail" alt="Responsive image">
+			</div>
+		</div>`
+	}
+
+	if videoURL != "" {
+		resp += `<br />
+				<iframe width="560" height="315" src="https://www.youtube.com/embed/` + videoURL + `" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+	}
+
+	return resp
+
+}
+
 func main() {
 	conn := getConn()
 	var meta *spotify.SpotifyMetadata
@@ -55,18 +98,8 @@ func main() {
 			<h2>SPOTIFY - ALBUM BAND INFO</h2>
 
 			<p class="font-weight-bold">` + meta.Artist[0] + `  ` + meta.Album + `</p>
-
-		
 			<div class="row">
-				<div class="col-md-4">
-					<img src="` + albumInfo[0] + `" class="img-fluid img-thumbnail" alt="Responsive image">
-				</div>
-				<div class="col-md-4">
-					<img src="` + albumInfo[1] + `" class="img-fluid img-thumbnail" alt="Responsive image">
-				</div>
-				<div class="col-md-4">
-					<img src="` + albumInfo[2] + `" class="img-fluid img-thumbnail" alt="Responsive image">
-				</div>
+				` + renderImage(albumInfo[0]) + renderImage(albumInfo[1]) + renderImage(albumInfo[2]) + `
 			</div>
 
 			<br>
@@ -74,23 +107,13 @@ func main() {
 			<p class="text-justify">` + albumInfo[3] + `</p>
 
 			<br>
-			<p class="font-weight-bold">Review album: </p>
-			<p class="text-justify">` + albumInfo[4] + `</p>
+			` + renderReview(albumInfo[4]) + `
 
 			<hr />
 			<!-- TRACK INFO -->
 			<br />
-			<h3>Track info</h3>
-			<p class="text-justify">` + trackInfo[0] + `</p>
-
-			<div class="row">
-				<div class="col-md-4">
-					<img src="` + trackInfo[2] + `" class="img-fluid img-thumbnail" alt="Responsive image">
-				</div>
-			</div>
-			<br />
-			<iframe width="560" height="315" src="https://www.youtube.com/embed/` + trackInfo[1] + `" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
+			` + renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2]) + `
+	
 			<hr />
 
 			<!-- BAND INFO -->
