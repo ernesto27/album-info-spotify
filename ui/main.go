@@ -15,7 +15,7 @@ func renderImage(imageURL string) string {
 		return ""
 	}
 	return `<div class="col-md-4">
-		<img src="` + imageURL + `" class="img-fluid img-thumbnail" alt="">
+		<img id="album-img-" src="` + imageURL + `" class="img-fluid img-thumbnail" alt="">
 	</div>`
 }
 
@@ -94,33 +94,36 @@ func main() {
 		<body>
 			<div class="container mt-5" >
 
-				<button id="button">RELOAD</button>
+				
 				<h2>SPOTIFY - ALBUM BAND INFO</h2>
-
+				<button type="button" class="btn btn-primary" id="button">REFRESH DATA</button>
+				<br /> <br />
 				<p class="font-weight-bold" id="title-artist-album">` + artistName + `  ` + meta.AlbumName + `</p>
-				<div class="row">
+				<div class="row" id="wrapper-album-images">
 					` + renderImage(albumInfo[0]) + renderImage(albumInfo[1]) + renderImage(albumInfo[2]) + `
 				</div>
 
 				<br>
 				<p class="font-weight-bold">Description album: </p>
-				<p class="text-justify">` + albumInfo[3] + `</p>
+				<p class="text-justify" id="description-album">` + albumInfo[3] + `</p>
 
 				<br>
+				<div id="review-album">
 				` + renderReview(albumInfo[4]) + `
-
+				</div>
 				<hr />
 				<!-- TRACK INFO -->
 				<br />
+				<div id="track-info">
 				` + renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2]) + `
-
+				</div>
 				<hr />
 
 				<!-- BAND INFO -->
 				<p class="font-weight-bold">BIO: </p>
-				<p class="text-justify">` + bandInfo[0] + `</p>
+				<p class="text-justify" id="artist-bio">` + bandInfo[0] + `</p>
 
-				<p>FORM YEAR: ` + bandInfo[1] + ` ` + bandInfo[2] + `</p>
+				<p>FORM YEAR: <span id="artist-year">` + bandInfo[1] + ` ` + bandInfo[2] + `</span></p>
 
 			</div>
 
@@ -129,13 +132,33 @@ func main() {
 					refresh().then( (data) => { 
 						console.log(data) 
 						document.getElementById('title-artist-album').innerHTML = data[0] + ' ' + data[1] ;
+
+						var imagesAlbumHTML = '';
+						
+						var wrapperAlbumImages = document.getElementById('wrapper-album-images');
+						wrapperAlbumImages.innerHTML = data[2];
+
+						var descriptionAlbum = document.getElementById('description-album');
+						descriptionAlbum.innerHTML = data[3];
+
+						var reviewAlbum = document.getElementById('review-album');
+						reviewAlbum.innerHTML = data[4];
+
+						var trackInfo = document.getElementById('track-info');
+						trackInfo.innerHTML = data[5];
+
+						var artistBio = document.getElementById('artist-bio');
+						artistBio.innerHTML = data[6];
+
+						var artistYear = document.getElementById('artist-year');
+						artistYear.innerHTML = data[7];
 					})
 				})
 			</script>
 		</body>
 		</html>
 		`
-	ui, _ := lorca.New("data:text/html,"+url.PathEscape(htmlBody), "", 900, 600)
+	ui, _ := lorca.New("data:text/html,"+url.PathEscape(htmlBody), "", 900, 700)
 	defer ui.Close()
 
 	// Create a GoLang function callable from JS
@@ -148,17 +171,40 @@ func main() {
 		}
 
 		artistName := meta.ArtistName[0]
+		albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
+		if err != nil {
+			panic(err)
+		}
 
-		/*
-			albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
-			if err != nil {
-				panic(err)
-			}
-		*/
+		var albumImageHTML string = ""
+		albumImageHTML += renderImage(albumInfo[0])
+		albumImageHTML += renderImage(albumInfo[1])
+		albumImageHTML += renderImage(albumInfo[2])
+
+		albumReview := renderReview(albumInfo[4])
+
+		trackInfo, err := client.GetTrackInfo(artistName, meta.TrackName)
+		if err != nil {
+			panic(err)
+		}
+
+		trackInfoHTML := renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2])
+
+		bandInfo, err := client.GetBandInfo(artistName)
+		if err != nil {
+			panic(err)
+		}
 
 		return []string{
-			artistName, 
-			meta.AlbumName
+			artistName,
+			meta.AlbumName,
+			albumImageHTML,
+			albumInfo[3],
+			albumReview,
+			trackInfoHTML,
+			bandInfo[0],
+			bandInfo[1],
+			bandInfo[2],
 		}
 	})
 	// Call above `hello` function then log to the JS console

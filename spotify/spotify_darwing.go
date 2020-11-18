@@ -53,7 +53,7 @@ func GetMetadataSpotify() (SpotifyMetadata, error) {
 	cmd.Run()
 	info := out.String()
 
-	r := regexp.MustCompile("\"artist\": \"([a-zA-Z 0-9 ]+)\"")
+	r := regexp.MustCompile("\"artist\": \"([a-zA-Z 0-9 '/]+)\"")
 	res := r.ReplaceAllString(info, "\"artist\": [\"$1\"]")
 
 	data := SpotifyMetadata{}
