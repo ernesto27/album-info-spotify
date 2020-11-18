@@ -1,6 +1,9 @@
+// +build linux
+
 package spotify
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/godbus/dbus"
@@ -15,9 +18,9 @@ const (
 
 // Metadata contains Spotify player metadata
 type SpotifyMetadata struct {
-	Artist      []string `spotify:"xesam:artist"`
-	Title       string   `spotify:"xesam:title"`
-	Album       string   `spotify:"xesam:album"`
+	ArtistName  []string `spotify:"xesam:artist"`
+	TrackName   string   `spotify:"xesam:title"`
+	AlbumName   string   `spotify:"xesam:album"`
 	AlbumArtist []string `spotify:"xesam:albumArtist"`
 	AutoRating  float64  `spotify:"xesam:autoRating"`
 	DiskNumber  int32    `spotify:"xesam:discNumber"`
@@ -49,7 +52,8 @@ func parseMetadata(variant dbus.Variant) *SpotifyMetadata {
 }
 
 // GetMetadata returns the current metadata from the Spotify app
-func GetMetadataSpotify(conn *dbus.Conn) (*SpotifyMetadata, error) {
+func GetMetadataSpotify() (*SpotifyMetadata, error) {
+	conn := getConn()
 	obj := conn.Object(sender, path)
 	property, err := obj.GetProperty(metadataMessage)
 	if err != nil {
@@ -57,4 +61,12 @@ func GetMetadataSpotify(conn *dbus.Conn) (*SpotifyMetadata, error) {
 	}
 
 	return parseMetadata(property), nil
+}
+
+func getConn() *dbus.Conn {
+	conn, err := dbus.SessionBus()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return conn
 }
