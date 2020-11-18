@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"regexp"
 )
 
 // Metadata contains Spotify player metadata
 type SpotifyMetadata struct {
-	ArtistName string `json:"artist"`
-	AlbumName  string `json:"album"`
-	TrackName  string `json:"name"`
+	ArtistName []string `json:"artist"`
+	AlbumName  string   `json:"album"`
+	TrackName  string   `json:"name"`
 }
 
 // GetMetadata returns the current metadata from the Spotify app
@@ -49,9 +50,14 @@ func GetMetadataSpotify() (SpotifyMetadata, error) {
 	cmd.Stdout = &out
 	cmd.Run()
 	info := out.String()
+
+	r := regexp.MustCompile("\"artist\": \"([a-zA-Z 0-9 ]+)\"")
+	res := r.ReplaceAllString(info, "\"artist\": [\"$1\"]")
+
 	data := SpotifyMetadata{}
-	json.Unmarshal([]byte(info), &data)
+	json.Unmarshal([]byte(res), &data)
 	return data, nil
+
 }
 
 func Darwin() {

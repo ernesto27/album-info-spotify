@@ -60,6 +60,8 @@ func main() {
 		log.Fatalf("failed getting metadata, err: %s", err.Error())
 	}
 
+	artistName := meta.ArtistName[0]
+
 	/*
 		conn := getConn()
 		var meta *spotify.SpotifyMetadata
@@ -70,17 +72,17 @@ func main() {
 		}
 	*/
 
-	albumInfo, err := client.GetAlbumInfo(meta.ArtistName, meta.AlbumName)
+	albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
 	if err != nil {
 		panic(err)
 	}
 
-	trackInfo, err := client.GetTrackInfo(meta.ArtistName, meta.TrackName)
+	trackInfo, err := client.GetTrackInfo(artistName, meta.TrackName)
 	if err != nil {
 		panic(err)
 	}
 
-	bandInfo, err := client.GetBandInfo(meta.ArtistName)
+	bandInfo, err := client.GetBandInfo(artistName)
 	if err != nil {
 		panic(err)
 	}
@@ -97,13 +99,13 @@ func main() {
 			<!-- Bootstrap CSS -->
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
 
-			<title>` + meta.ArtistName + `  ` + meta.AlbumName + `</title>
+			<title>` + artistName + `  ` + meta.AlbumName + `</title>
 		</head>
 		<body>
 			<div class="container mt-5" >
 				<h2>SPOTIFY - ALBUM BAND INFO</h2>
 
-				<p class="font-weight-bold">` + meta.ArtistName + `  ` + meta.AlbumName + `</p>
+				<p class="font-weight-bold">` + artistName + `  ` + meta.AlbumName + `</p>
 				<div class="row">
 					` + renderImage(albumInfo[0]) + renderImage(albumInfo[1]) + renderImage(albumInfo[2]) + `
 				</div>
