@@ -1,4 +1,4 @@
-// +build darwini
+// +build darwin
 
 package spotify
 

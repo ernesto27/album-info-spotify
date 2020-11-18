@@ -3,19 +3,23 @@
 This is a simple command line app that shows info of the current playing album listen on spotify desktop app, also have the possibility to search info by enter artistsName and albumName by hand
 
 ## Install
-NOTE: Only tested on ubuntu 18.04 and above
+NOTE: Works on ubuntu and MacOS.
+
+Go to releases page and download file "spotify-info-*"  for your current operaing system 
+
+https://github.com/ernesto27/album-info-spotify/releases
 
 ### Desktop app
-Go to releases page and download file "ui-spotify-info".
+
 
 Make file executable
 ```sh
-$ chmod +x cmd-spotify-info
+$ chmod +x spotify-info-linux
 ```
 
 #### Use
 ```sh
-$ ./ui-spotify-info
+$ ./spotify-info-linux
 ```
 
 ![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-14-34.png)
