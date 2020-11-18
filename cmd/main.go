@@ -39,7 +39,9 @@ func main() {
 		log.Fatalf("failed getting metadata, err: %s", err.Error())
 	}
 
-	albumInfo, err := client.GetAlbumInfo(meta.ArtistName, meta.AlbumName)
+	artistName := meta.ArtistName[0]
+
+	albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +72,7 @@ func main() {
 	fmt.Println()
 
 	// BAND INFO
-	bandInfo, err := client.GetBandInfo(meta.ArtistName)
+	bandInfo, err := client.GetBandInfo(artistName)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +86,7 @@ func main() {
 	fmt.Println()
 
 	// TRACK DESCRIPTION
-	trackInfo, err := client.GetTrackInfo(meta.ArtistName, meta.TrackName)
+	trackInfo, err := client.GetTrackInfo(artistName, meta.TrackName)
 	if err != nil {
 		panic(err)
 	}
@@ -101,13 +103,3 @@ func main() {
 		fmt.Println(trackInfo[3])
 	}
 }
-
-/*
-func getConn() *dbus.Conn {
-	conn, err := dbus.SessionBus()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return conn
-}
-*/

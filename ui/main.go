@@ -62,16 +62,6 @@ func main() {
 
 	artistName := meta.ArtistName[0]
 
-	/*
-		conn := getConn()
-		var meta *spotify.SpotifyMetadata
-		meta, err := spotify.GetMetadataSpotify(conn)
-		if err != nil {
-			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
-			log.Fatalf("failed getting metadata, err: %s", err.Error())
-		}
-	*/
-
 	albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
 	if err != nil {
 		panic(err)
@@ -144,15 +134,4 @@ func main() {
 	ui.Eval("hello().then( (x) => { console.log(x) })")
 	// Wait until UI window is closed
 	<-ui.Done()
-
 }
-
-/*
-func getConn() *dbus.Conn {
-	conn, err := dbus.SessionBus()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return conn
-}
-*/

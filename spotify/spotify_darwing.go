@@ -1,3 +1,5 @@
+// +build darwini
+
 package spotify
 
 import (
