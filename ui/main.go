@@ -93,9 +93,11 @@ func main() {
 		</head>
 		<body>
 			<div class="container mt-5" >
+
+				<button id="button">RELOAD</button>
 				<h2>SPOTIFY - ALBUM BAND INFO</h2>
 
-				<p class="font-weight-bold">` + artistName + `  ` + meta.AlbumName + `</p>
+				<p class="font-weight-bold" id="title-artist-album">` + artistName + `  ` + meta.AlbumName + `</p>
 				<div class="row">
 					` + renderImage(albumInfo[0]) + renderImage(albumInfo[1]) + renderImage(albumInfo[2]) + `
 				</div>
@@ -122,14 +124,43 @@ func main() {
 
 			</div>
 
-
+			<script>
+				document.getElementById('button').addEventListener('click', function(){
+					refresh().then( (data) => { 
+						console.log(data) 
+						document.getElementById('title-artist-album').innerHTML = data[0] + ' ' + data[1] ;
+					})
+				})
+			</script>
 		</body>
 		</html>
 		`
 	ui, _ := lorca.New("data:text/html,"+url.PathEscape(htmlBody), "", 900, 600)
 	defer ui.Close()
+
 	// Create a GoLang function callable from JS
 	ui.Bind("hello", func() string { return "World!" })
+	ui.Bind("refresh", func() []string {
+		meta, err := spotify.GetMetadataSpotify()
+		if err != nil {
+			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
+			log.Fatalf("failed getting metadata, err: %s", err.Error())
+		}
+
+		artistName := meta.ArtistName[0]
+
+		/*
+			albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
+			if err != nil {
+				panic(err)
+			}
+		*/
+
+		return []string{
+			artistName, 
+			meta.AlbumName
+		}
+	})
 	// Call above `hello` function then log to the JS console
 	ui.Eval("hello().then( (x) => { console.log(x) })")
 	// Wait until UI window is closed
