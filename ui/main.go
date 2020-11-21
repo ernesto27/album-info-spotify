@@ -73,6 +73,12 @@ func main() {
 
 	artistName := meta.ArtistName[0]
 
+	if artistName == "" {
+		// Not type music album
+		// TODO SHOW OTHER VIEW
+		panic("No album type")
+	}
+
 	wg.Add(3)
 
 	albumChannel := make(chan []string)
@@ -108,6 +114,8 @@ func main() {
 
 				
 				<h2>SPOTIFY - ALBUM BAND INFO</h2>
+
+				<img id="loading" src="https://i.pinimg.com/originals/1c/13/f3/1c13f3fe7a6bba370007aea254e195e3.gif" width="50" height="50" style="display:none"/>
 				<button type="button" class="btn btn-primary" id="button">REFRESH DATA</button>
 				<br /> <br />
 				<p class="font-weight-bold" id="title-artist-album">` + artistName + `  ` + meta.AlbumName + `</p>
@@ -140,9 +148,11 @@ func main() {
 			</div>
 
 			<script>
+				var loading = document.getElementById('loading');
 				document.getElementById('button').addEventListener('click', function(){
+					loading.style.display = 'block';
+
 					refresh().then( (data) => { 
-						console.log(data) 
 						document.getElementById('title-artist-album').innerHTML = data[0] + ' ' + data[1] ;
 
 						var imagesAlbumHTML = '';
@@ -164,6 +174,8 @@ func main() {
 
 						var artistYear = document.getElementById('artist-year');
 						artistYear.innerHTML = data[7];
+
+						loading.style.display = 'none';
 					})
 				})
 			</script>
