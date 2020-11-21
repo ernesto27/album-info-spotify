@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"sync"
 
 	"github.com/zserge/lorca"
 )
@@ -53,6 +54,8 @@ func renderTrackInfo(text string, videoURL string, thumb string) string {
 
 }
 
+var wg sync.WaitGroup
+
 func main() {
 	meta, err := spotify.GetMetadataSpotify()
 	if err != nil {
@@ -62,20 +65,21 @@ func main() {
 
 	artistName := meta.ArtistName[0]
 
-	albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
-	if err != nil {
-		panic(err)
-	}
+	wg.Add(3)
 
-	trackInfo, err := client.GetTrackInfo(artistName, meta.TrackName)
-	if err != nil {
-		panic(err)
-	}
+	albumChannel := make(chan []string)
+	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
+	albumInfo := <-albumChannel
 
-	bandInfo, err := client.GetBandInfo(artistName)
-	if err != nil {
-		panic(err)
-	}
+	trackChannel := make(chan []string)
+	go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
+	trackInfo := <-trackChannel
+
+	bandChannel := make(chan []string)
+	go client.GetBandInfo(artistName, &wg, bandChannel)
+	bandInfo := <-bandChannel
+
+	wg.Wait()
 
 	// Create UI with data URI
 	var htmlBody string = `
@@ -158,7 +162,7 @@ func main() {
 		</body>
 		</html>
 		`
-	ui, _ := lorca.New("data:text/html,"+url.PathEscape(htmlBody), "", 900, 700)
+	ui, _ := lorca.New("data:text/html,"+url.PathEscape(htmlBody), "", 1100, 800)
 	defer ui.Close()
 
 	// Create a GoLang function callable from JS
@@ -171,10 +175,21 @@ func main() {
 		}
 
 		artistName := meta.ArtistName[0]
-		albumInfo, err := client.GetAlbumInfo(artistName, meta.AlbumName)
-		if err != nil {
-			panic(err)
-		}
+
+		wg.Add(3)
+		albumChannel := make(chan []string)
+		go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
+		albumInfo := <-albumChannel
+
+		trackChannel := make(chan []string)
+		go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
+		trackInfo := <-trackChannel
+
+		bandChannel := make(chan []string)
+		go client.GetBandInfo(artistName, &wg, bandChannel)
+		bandInfo := <-bandChannel
+
+		wg.Wait()
 
 		var albumImageHTML string = ""
 		albumImageHTML += renderImage(albumInfo[0])
@@ -183,17 +198,7 @@ func main() {
 
 		albumReview := renderReview(albumInfo[4])
 
-		trackInfo, err := client.GetTrackInfo(artistName, meta.TrackName)
-		if err != nil {
-			panic(err)
-		}
-
 		trackInfoHTML := renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2])
-
-		bandInfo, err := client.GetBandInfo(artistName)
-		if err != nil {
-			panic(err)
-		}
 
 		return []string{
 			artistName,

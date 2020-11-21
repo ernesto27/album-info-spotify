@@ -2,11 +2,11 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -51,7 +51,9 @@ type ResponseBand struct {
 	Band []Band `json:"artists"`
 }
 
-func GetAlbumInfo(nameBand string, albumBand string) ([]string, error) {
+func GetAlbumInfo(nameBand string, albumBand string, wg *sync.WaitGroup, albumChannel chan []string) {
+	defer wg.Done()
+
 	album := new(ResponseAlbum)
 	cleanInfo := cleanStrings(nameBand, albumBand, "")
 	nameBand = cleanInfo[0]
@@ -59,9 +61,7 @@ func GetAlbumInfo(nameBand string, albumBand string) ([]string, error) {
 
 	fmt.Println(apiURL + "searchalbum.php?s=" + nameBand + "&a=" + albumBand)
 	getJson(apiURL+"searchalbum.php?s="+nameBand+"&a="+albumBand, album)
-	if len(album.Album) == 0 {
-		return []string{}, errors.New("Album not found")
-	}
+
 	resp := []string{
 		album.Album[0].ThumbFront,
 		album.Album[0].ThumbBack,
@@ -74,10 +74,12 @@ func GetAlbumInfo(nameBand string, albumBand string) ([]string, error) {
 		album.Album[0].Style,
 		album.Album[0].Label,
 	}
-	return resp, nil
+
+	albumChannel <- resp
 }
 
-func GetTrackInfo(nameBand string, trackName string) ([]string, error) {
+func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackChannel chan []string) {
+	defer wg.Done()
 	var track = new(ResponseTrack)
 	cleanInfo := cleanStrings(nameBand, "", trackName)
 	nameBand = cleanInfo[0]
@@ -85,10 +87,6 @@ func GetTrackInfo(nameBand string, trackName string) ([]string, error) {
 
 	fmt.Println(apiURL + "searchtrack.php?s=" + nameBand + "&t=" + trackName)
 	getJson(apiURL+"searchtrack.php?s="+nameBand+"&t="+trackName, track)
-
-	if len(track.Track) == 0 {
-		return []string{}, errors.New("Track not found :(")
-	}
 
 	// Get id url youtube
 	var idVideo string
@@ -102,25 +100,26 @@ func GetTrackInfo(nameBand string, trackName string) ([]string, error) {
 		track.Track[0].Thumb,
 		track.Track[0].YoutubeURL,
 	}
-
-	return resp, nil
+	trackChannel <- resp
 }
 
-func GetBandInfo(nameBand string) ([]string, error) {
+func GetBandInfo(nameBand string, wg *sync.WaitGroup, bandChannel chan []string) {
+	defer wg.Done()
 	var band = new(ResponseBand)
 	cleanInfo := cleanStrings(nameBand, "", "")
 	nameBand = cleanInfo[0]
 	fmt.Println(apiURL + "search.php?s=" + nameBand)
 	getJson(apiURL+"search.php?s="+nameBand, band)
-	if len(band.Band) == 0 {
-		return []string{}, errors.New("Band not found")
-	}
+	// if len(band.Band) == 0 {
+	// 	return []string{}, errors.New("Band not found")
+	// }
 	resp := []string{
 		band.Band[0].Biograhpy,
 		band.Band[0].FormedYear,
 		band.Band[0].Country,
 	}
-	return resp, nil
+
+	bandChannel <- resp
 }
 
 func cleanStrings(nameBand string, albumBand string, trackName string) []string {
