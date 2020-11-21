@@ -88,6 +88,11 @@ func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackCh
 	fmt.Println(apiURL + "searchtrack.php?s=" + nameBand + "&t=" + trackName)
 	getJson(apiURL+"searchtrack.php?s="+nameBand+"&t="+trackName, track)
 
+	if len(track.Track) == 0 {
+		trackChannel <- []string{}
+		return
+	}
+
 	// Get id url youtube
 	var idVideo string
 	if track.Track[0].YoutubeURL != "" {

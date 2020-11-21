@@ -28,7 +28,15 @@ func renderReview(text string) string {
 			<p class="text-justify">` + text + `</p> `
 }
 
-func renderTrackInfo(text string, videoURL string, thumb string) string {
+func renderTrackInfo(trackInfo []string) string {
+	if len(trackInfo) == 0 {
+		return ""
+	}
+
+	text := trackInfo[0]
+	videoURL := trackInfo[1]
+	thumb := trackInfo[2]
+
 	var resp string = ""
 	if text != "" {
 		resp += `
@@ -119,7 +127,7 @@ func main() {
 				<!-- TRACK INFO -->
 				<br />
 				<div id="track-info">
-				` + renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2]) + `
+				` + renderTrackInfo(trackInfo) + `
 				</div>
 				<hr />
 
@@ -198,7 +206,7 @@ func main() {
 
 		albumReview := renderReview(albumInfo[4])
 
-		trackInfoHTML := renderTrackInfo(trackInfo[0], trackInfo[1], trackInfo[2])
+		trackInfoHTML := renderTrackInfo(trackInfo)
 
 		return []string{
 			artistName,
