@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/zserge/lorca"
@@ -87,6 +88,22 @@ func renderAlbumMetadata(albumInfo *client.ResponseAlbum) string {
 	return resp
 }
 
+func renderBandAlbumImages(items client.Items) string {
+	var resp string = ""
+	for _, value := range items.Images {
+		imgURL := fmt.Sprint(value)
+		imgURL = strings.ReplaceAll(imgURL, "{", "")
+		imgURL = strings.ReplaceAll(imgURL, "}", "")
+		resp += `<img 
+			src="` + imgURL + `" 
+			class="img-fluid mr-2 mb-2" 
+			alt="Responsive image"
+			style="max-width: 250px; max-height: 250px"
+		>`
+	}
+	return resp
+}
+
 var wg sync.WaitGroup
 
 func main() {
@@ -105,7 +122,6 @@ func main() {
 	}
 
 	wg.Add(3)
-
 	albumChannel := make(chan *client.ResponseAlbum)
 	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 	albumInfo := <-albumChannel
@@ -117,8 +133,10 @@ func main() {
 	bandChannel := make(chan []string)
 	go client.GetBandInfo(artistName, &wg, bandChannel)
 	bandInfo := <-bandChannel
-
 	wg.Wait()
+
+	// Get images from album, band
+	items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
 
 	// Create UI with data URI
 	var htmlBody string = `
@@ -168,6 +186,13 @@ func main() {
 				</div>
 				<hr />
 
+				<p class="font-weight-bold">BAND/ARTIST IMAGES: </p>
+
+				<div id="wrapper-images-band" class="row">
+				` + renderBandAlbumImages(*items) + `
+				</div>
+				<hr />
+
 				<!-- BAND INFO -->
 				<p class="font-weight-bold">BIO: </p>
 				<p class="text-justify" id="artist-bio">` + bandInfo[0] + `</p>
@@ -209,6 +234,9 @@ func main() {
 						metadataAlbum.innerHTML = data[9];
 
 						document.title = data[10]
+
+						var artistImages = document.getElementById('wrapper-images-band');
+						artistImages.innerHTML = data[11];
 
 						loading.style.display = 'none';
 					})
@@ -260,6 +288,10 @@ func main() {
 
 		title := renderTitle(albumInfo)
 
+		// Get images from album, band
+		items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
+		bandImages := renderBandAlbumImages(*items)
+
 		return []string{
 			artistName,
 			meta.AlbumName,
@@ -272,6 +304,7 @@ func main() {
 			bandInfo[2],
 			albumMetadata,
 			title,
+			bandImages,
 		}
 	})
 	// Call above `hello` function then log to the JS console
