@@ -24,6 +24,7 @@ type Album struct {
 	ThumbFront  string `json:"strAlbumThumb"`
 	ThumbBack   string `json:"strAlbumThumbBack"`
 	ThumbCD     string `json:"strAlbumCDart"`
+	Score       string `json:"intScore"`
 }
 
 type ResponseAlbum struct {
@@ -51,7 +52,7 @@ type ResponseBand struct {
 	Band []Band `json:"artists"`
 }
 
-func GetAlbumInfo(nameBand string, albumBand string, wg *sync.WaitGroup, albumChannel chan []string) {
+func GetAlbumInfo(nameBand string, albumBand string, wg *sync.WaitGroup, albumChannel chan *ResponseAlbum) {
 	defer wg.Done()
 
 	album := new(ResponseAlbum)
@@ -62,20 +63,7 @@ func GetAlbumInfo(nameBand string, albumBand string, wg *sync.WaitGroup, albumCh
 	fmt.Println(apiURL + "searchalbum.php?s=" + nameBand + "&a=" + albumBand)
 	getJson(apiURL+"searchalbum.php?s="+nameBand+"&a="+albumBand, album)
 
-	resp := []string{
-		album.Album[0].ThumbFront,
-		album.Album[0].ThumbBack,
-		album.Album[0].ThumbCD,
-		album.Album[0].Description,
-		album.Album[0].Review,
-		album.Album[0].Artist,
-		album.Album[0].Name,
-		album.Album[0].ReleaseYear,
-		album.Album[0].Style,
-		album.Album[0].Label,
-	}
-
-	albumChannel <- resp
+	albumChannel <- album
 }
 
 func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackChannel chan []string) {

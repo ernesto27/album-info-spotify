@@ -59,7 +59,32 @@ func renderTrackInfo(trackInfo []string) string {
 	}
 
 	return resp
+}
 
+func renderTitle(albumInfo *client.ResponseAlbum) string {
+	var resp string = ""
+	resp += albumInfo.Album[0].Artist + ` - ` + albumInfo.Album[0].Name
+	return resp
+}
+
+func renderAlbumMetadata(albumInfo *client.ResponseAlbum) string {
+	var resp string = ""
+
+	resp += `<p class="font-weight-bold" id="title-artist-album">` + albumInfo.Album[0].Artist +
+		` -  ` + albumInfo.Album[0].Name + ` -  ` + albumInfo.Album[0].ReleaseYear + `</p>`
+
+	if albumInfo.Album[0].Label != "" {
+		resp += `<p class="font-weight-bold">Label: ` + albumInfo.Album[0].Label + `</p>`
+	}
+	if albumInfo.Album[0].Style != "" {
+		resp += `<p class="font-weight-bold">Genre: ` + albumInfo.Album[0].Style + `</p>`
+	}
+
+	if albumInfo.Album[0].Score != "" {
+		resp += `<p class="font-weight-bold">Score: ` + albumInfo.Album[0].Score + `</p>`
+	}
+
+	return resp
 }
 
 var wg sync.WaitGroup
@@ -81,7 +106,7 @@ func main() {
 
 	wg.Add(3)
 
-	albumChannel := make(chan []string)
+	albumChannel := make(chan *client.ResponseAlbum)
 	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 	albumInfo := <-albumChannel
 
@@ -107,7 +132,7 @@ func main() {
 			<!-- Bootstrap CSS -->
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
 
-			<title>` + artistName + `  ` + meta.AlbumName + `</title>
+			<title>` + renderTitle(albumInfo) + `</title>
 		</head>
 		<body>
 			<div class="container mt-5" >
@@ -118,18 +143,22 @@ func main() {
 				<img id="loading" src="https://i.pinimg.com/originals/1c/13/f3/1c13f3fe7a6bba370007aea254e195e3.gif" width="50" height="50" style="display:none"/>
 				<button type="button" class="btn btn-primary" id="button">REFRESH DATA</button>
 				<br /> <br />
-				<p class="font-weight-bold" id="title-artist-album">` + artistName + `  ` + meta.AlbumName + `</p>
+				
+				<div id="wrapper-metadata-album">
+				` + renderAlbumMetadata(albumInfo) + `
+				</div>
+
 				<div class="row" id="wrapper-album-images">
-					` + renderImage(albumInfo[0]) + renderImage(albumInfo[1]) + renderImage(albumInfo[2]) + `
+					` + renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
 				</div>
 
 				<br>
 				<p class="font-weight-bold">Description album: </p>
-				<p class="text-justify" id="description-album">` + albumInfo[3] + `</p>
+				<p class="text-justify" id="description-album">` + albumInfo.Album[0].Description + `</p>
 
 				<br>
 				<div id="review-album">
-				` + renderReview(albumInfo[4]) + `
+				` + renderReview(albumInfo.Album[0].Review) + `
 				</div>
 				<hr />
 				<!-- TRACK INFO -->
@@ -149,6 +178,7 @@ func main() {
 
 			<script>
 				var loading = document.getElementById('loading');
+
 				document.getElementById('button').addEventListener('click', function(){
 					loading.style.display = 'block';
 
@@ -175,6 +205,11 @@ func main() {
 						var artistYear = document.getElementById('artist-year');
 						artistYear.innerHTML = data[7];
 
+						var metadataAlbum = document.getElementById('wrapper-metadata-album');
+						metadataAlbum.innerHTML = data[9];
+
+						document.title = data[10]
+
 						loading.style.display = 'none';
 					})
 				})
@@ -197,7 +232,8 @@ func main() {
 		artistName := meta.ArtistName[0]
 
 		wg.Add(3)
-		albumChannel := make(chan []string)
+
+		albumChannel := make(chan *client.ResponseAlbum)
 		go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 		albumInfo := <-albumChannel
 
@@ -211,25 +247,31 @@ func main() {
 
 		wg.Wait()
 
-		var albumImageHTML string = ""
-		albumImageHTML += renderImage(albumInfo[0])
-		albumImageHTML += renderImage(albumInfo[1])
-		albumImageHTML += renderImage(albumInfo[2])
+		albumMetadata := renderAlbumMetadata(albumInfo)
 
-		albumReview := renderReview(albumInfo[4])
+		var albumImageHTML string = ""
+		albumImageHTML += renderImage(albumInfo.Album[0].ThumbFront)
+		albumImageHTML += renderImage(albumInfo.Album[0].ThumbBack)
+		albumImageHTML += renderImage(albumInfo.Album[0].ThumbCD)
+
+		albumReview := renderReview(albumInfo.Album[0].Review)
 
 		trackInfoHTML := renderTrackInfo(trackInfo)
+
+		title := renderTitle(albumInfo)
 
 		return []string{
 			artistName,
 			meta.AlbumName,
 			albumImageHTML,
-			albumInfo[3],
+			albumInfo.Album[0].Description,
 			albumReview,
 			trackInfoHTML,
 			bandInfo[0],
 			bandInfo[1],
 			bandInfo[2],
+			albumMetadata,
+			title,
 		}
 	})
 	// Call above `hello` function then log to the JS console
