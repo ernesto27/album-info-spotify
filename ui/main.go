@@ -12,6 +12,22 @@ import (
 	"github.com/zserge/lorca"
 )
 
+func renderTitle(albumInfo *client.ResponseAlbum) string {
+	var resp string = ""
+	resp += albumInfo.Album[0].Artist + ` - ` + albumInfo.Album[0].Name
+	return resp
+}
+
+func renderHeader(albumInfo *client.ResponseAlbum) string {
+	resp := renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
+	<div class="flex flex-col justify-center">
+		<!-- content -->
+		<h4 class="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">Album metadata spotify</h4>
+		` + renderAlbumMetadata(albumInfo) + `
+	</div>`
+	return resp
+}
+
 func renderImage(imageURL string) string {
 	if imageURL == "" {
 		return ""
@@ -41,13 +57,13 @@ func renderTrackInfo(trackInfo []string) string {
 
 	if text != "" {
 
-		resp += `<h3>Track info</h3>`
+		resp += `<p class="text-3xl mb-3">Track info</p>`
 
 		if thumb != "" {
 			resp += `<img class=" mb-3" width=150 height=150 src="` + thumb + `" />`
 		}
 
-		resp += `<p class="text-justify">` + text + `</p>`
+		resp += `<p class="text-justify mt-3">` + text + `</p>`
 
 		if videoURL != "" {
 			resp += `
@@ -58,12 +74,6 @@ func renderTrackInfo(trackInfo []string) string {
 		}
 	}
 
-	return resp
-}
-
-func renderTitle(albumInfo *client.ResponseAlbum) string {
-	var resp string = ""
-	resp += albumInfo.Album[0].Artist + ` - ` + albumInfo.Album[0].Name
 	return resp
 }
 
@@ -147,116 +157,6 @@ func main() {
 	// Get images from album, band
 	items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
 
-	fmt.Print(trackInfo)
-
-	// Create UI with data URI
-	/*
-		var htmlBody string = `
-			<!doctype html>
-			<html lang="en">
-			<head>
-				<!-- Required meta tags -->
-				<meta charset="utf-8">
-				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-				<!-- Bootstrap CSS -->
-				<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-
-				<title>` + renderTitle(albumInfo) + `</title>
-			</head>
-			<body>
-				<div class="container mt-5" >
-
-
-					<h2>SPOTIFY - ALBUM BAND INFO</h2>
-
-					<img id="loading" src="https://i.pinimg.com/originals/1c/13/f3/1c13f3fe7a6bba370007aea254e195e3.gif" width="50" height="50" style="display:none"/>
-					<button type="button" class="btn btn-primary" id="button">REFRESH DATA</button>
-					<br /> <br />
-
-					<div id="wrapper-metadata-album">
-					` + renderAlbumMetadata(albumInfo) + `
-					</div>
-
-					<div class="row" id="wrapper-album-images">
-						` + renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
-					</div>
-
-					<br>
-					<p class="font-weight-bold">Description album: </p>
-					<p class="text-justify" id="description-album">` + albumInfo.Album[0].Description + `</p>
-
-					<br>
-					<div id="review-album">
-					` + renderReview(albumInfo.Album[0].Review) + `
-					</div>
-					<hr />
-					<!-- TRACK INFO -->
-					<br />
-					<div id="track-info">
-					` + renderTrackInfo(trackInfo) + `
-					</div>
-					<hr />
-
-					<p class="font-weight-bold">BAND/ARTIST IMAGES: </p>
-
-					<div id="wrapper-images-band" class="row">
-					` + renderBandAlbumImages(*items) + `
-					</div>
-					<hr />
-
-					<!-- BAND INFO -->
-					<p class="font-weight-bold">BIO: </p>
-					<p class="text-justify" id="artist-bio">` + bandInfo[0] + `</p>
-					<p>FORM YEAR: <span id="artist-year">` + bandInfo[1] + ` ` + bandInfo[2] + `</span></p>
-
-				</div>
-
-				<script>
-					var loading = document.getElementById('loading');
-
-					document.getElementById('button').addEventListener('click', function(){
-						loading.style.display = 'block';
-
-						refresh().then( (data) => {
-							document.getElementById('title-artist-album').innerHTML = data[0] + ' ' + data[1] ;
-
-							var imagesAlbumHTML = '';
-
-							var wrapperAlbumImages = document.getElementById('wrapper-album-images');
-							wrapperAlbumImages.innerHTML = data[2];
-
-							var descriptionAlbum = document.getElementById('description-album');
-							descriptionAlbum.innerHTML = data[3];
-
-							var reviewAlbum = document.getElementById('review-album');
-							reviewAlbum.innerHTML = data[4];
-
-							var trackInfo = document.getElementById('track-info');
-							trackInfo.innerHTML = data[5];
-
-							var artistBio = document.getElementById('artist-bio');
-							artistBio.innerHTML = data[6];
-
-							var artistYear = document.getElementById('artist-year');
-							artistYear.innerHTML = data[7];
-
-							var metadataAlbum = document.getElementById('wrapper-metadata-album');
-							metadataAlbum.innerHTML = data[9];
-
-							document.title = data[10]
-
-							var artistImages = document.getElementById('wrapper-images-band');
-							artistImages.innerHTML = data[11];
-
-							loading.style.display = 'none';
-						})
-					})
-				</script>
-			</body>
-			</html>
-			`
-	*/
 	htmlBody := `
 	<html>
 	<title>` + renderTitle(albumInfo) + `</title>
@@ -268,46 +168,32 @@ func main() {
 		<div class="bg-black text-gray-300 min-h-screen p-10">
 	
 			<!-- header -->
-			<div class="flex">
-				` + renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
-			
-
-				<div class="flex flex-col justify-center">
-					<!-- content -->
-					<h4 class="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">Album metadata spotify</h4>
-					` + renderAlbumMetadata(albumInfo) + `
-				</div>
-
-				<!-- <div class="flex flex-row">
-					
-				</div> -->
+			<div id="wrapper-header" class="flex">
+				` + renderHeader(albumInfo) + `
+				
 			</div>
 			
 			<!-- action buttons -->
 			<div class="mt-6 flex justify-between">
-			<div class="flex">
-				<button id="refresh-data" class="mr-2 bg-green-500 text-green-100 block py-2 px-8 rounded-full">Refresh data</button>
+				<div class="flex">
+					<button id="refresh-data" class="mr-2 bg-green-500 text-green-100 block py-2 px-8 rounded-full">Refresh data</button>
 
-			</div>
-			<!-- <div class="text-gray-600 text-sm tracking-widest text-right">
-				<h5 class="mb-1">Followers</h5>
-				<p>5,055</p>
-			</div> -->
+				</div>
 			</div>
 
 			<div class="container mt-10 ">
 				<p class="text-3xl">Album description</p>
 
-				<p class="mt-2 text-justify">
+				<p id="wrapper-album-description" class="mt-2 text-justify">
 					` + albumInfo.Album[0].Description + `
 				</p>
 			</div>
 
-			<div class="container mt-10 ">
+			<div id="wrapper-album-review" class="container mt-10 ">
 			` + renderReview(albumInfo.Album[0].Review) + `
 			</div>
 
-			<div class="container mt-10 ">
+			<div id="wrapper-album-track" class="container mt-10 ">
 			` + renderTrackInfo(trackInfo) + `
 			</div>
 
@@ -320,7 +206,7 @@ func main() {
 				</div>
 			</div>
 
-			<div class="container mt-10 ">
+			<div id="wrapper-artist-bio"  class="container mt-10 ">
 				` + renderBio(bandInfo) + `
 			</div>
 		</div>
@@ -328,11 +214,22 @@ func main() {
 		<script>
 		document.getElementById('refresh-data').addEventListener('click', function(){
 
+			var wrapperHeader = document.getElementById('wrapper-header');
+			var wrapperAlbumDescription = document.getElementById('wrapper-album-description');
+			var wrapperAlbumReview = document.getElementById('wrapper-album-review');
+			var wrapperAlbumTrack = document.getElementById('wrapper-album-track');
+			var wrapperArtistBio = document.getElementById('wrapper-artist-bio');
 
 			refresh().then( (data) => { 
 				console.log(data)
 
 				document.title = data.title;
+
+				wrapperHeader.innerHTML = data.header;
+				wrapperAlbumDescription.innerHTML = data.albumDescription;
+				wrapperAlbumReview.innerHTML = data.review;
+				wrapperAlbumTrack.innerHTML = data.track;
+				wrapperArtistBio.innerHTML = data.bio;
 
 			})
 		})
@@ -345,62 +242,6 @@ func main() {
 	defer ui.Close()
 
 	ui.Bind("refresh", func() map[string]string {
-		// meta, err := spotify.GetMetadataSpotify()
-		// if err != nil {
-		// 	fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
-		// 	log.Fatalf("failed getting metadata, err: %s", err.Error())
-		// }
-
-		// artistName := meta.ArtistName[0]
-
-		// wg.Add(3)
-
-		// albumChannel := make(chan *client.ResponseAlbum)
-		// go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
-		// albumInfo := <-albumChannel
-
-		// trackChannel := make(chan []string)
-		// go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
-		// trackInfo := <-trackChannel
-
-		// bandChannel := make(chan []string)
-		// go client.GetBandInfo(artistName, &wg, bandChannel)
-		// bandInfo := <-bandChannel
-
-		// wg.Wait()
-
-		// albumMetadata := renderAlbumMetadata(albumInfo)
-
-		// var albumImageHTML string = ""
-		// albumImageHTML += renderImage(albumInfo.Album[0].ThumbFront)
-		// albumImageHTML += renderImage(albumInfo.Album[0].ThumbBack)
-		// albumImageHTML += renderImage(albumInfo.Album[0].ThumbCD)
-
-		// albumReview := renderReview(albumInfo.Album[0].Review)
-
-		// trackInfoHTML := renderTrackInfo(trackInfo)
-
-		// title := renderTitle(albumInfo)
-
-		// // Get images from album, band
-		// items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
-		// bandImages := renderBandAlbumImages(*items)
-
-		// return []string{
-		// 	artistName,
-		// 	meta.AlbumName,
-		// 	albumImageHTML,
-		// 	albumInfo.Album[0].Description,
-		// 	albumReview,
-		// 	trackInfoHTML,
-		// 	bandInfo[0],
-		// 	bandInfo[1],
-		// 	bandInfo[2],
-		// 	albumMetadata,
-		// 	title,
-		// 	bandImages,
-		// }
-
 		meta, err := spotify.GetMetadataSpotify()
 		if err != nil {
 			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
@@ -409,26 +250,35 @@ func main() {
 
 		artistName := meta.ArtistName[0]
 
-		wg.Add(1)
+		wg.Add(3)
 
 		albumChannel := make(chan *client.ResponseAlbum)
 		go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 		albumInfo := <-albumChannel
 
-		// trackChannel := make(chan []string)
-		// go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
-		// trackInfo := <-trackChannel
+		trackChannel := make(chan []string)
+		go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
+		trackInfo := <-trackChannel
 
 		// bandChannel := make(chan []string)
-		// go client.GetBandInfo(artistName, &wg, bandChannel)
-		// bandInfo := <-bandChannel
+		go client.GetBandInfo(artistName, &wg, bandChannel)
+		bandInfo := <-bandChannel
 
 		wg.Wait()
 
 		title := renderTitle(albumInfo)
+		header := renderHeader(albumInfo)
+		review := renderReview(albumInfo.Album[0].Review)
+		track := renderTrackInfo(trackInfo)
+		bio := renderBio(bandInfo)
+
 		n := map[string]string{
-			"title": title,
-			"bar":   "some bar",
+			"title":            title,
+			"header":           header,
+			"albumDescription": albumInfo.Album[0].Description,
+			"review":           review,
+			"track":            track,
+			"bio":              bio,
 		}
 		return n
 	})
