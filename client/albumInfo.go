@@ -66,7 +66,7 @@ func GetAlbumInfo(nameBand string, albumBand string, wg *sync.WaitGroup, albumCh
 	albumChannel <- album
 }
 
-func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackChannel chan []string) {
+func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackChannel chan *ResponseTrack) {
 	defer wg.Done()
 	var track = new(ResponseTrack)
 	cleanInfo := cleanStrings(nameBand, "", trackName)
@@ -76,24 +76,7 @@ func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackCh
 	fmt.Println(apiURL + "searchtrack.php?s=" + nameBand + "&t=" + trackName)
 	getJson(apiURL+"searchtrack.php?s="+nameBand+"&t="+trackName, track)
 
-	if len(track.Track) == 0 {
-		trackChannel <- []string{}
-		return
-	}
-
-	// Get id url youtube
-	var idVideo string
-	if track.Track[0].YoutubeURL != "" {
-		idVideo = strings.Split(track.Track[0].YoutubeURL, "v=")[1]
-	}
-
-	resp := []string{
-		track.Track[0].Description,
-		idVideo,
-		track.Track[0].Thumb,
-		track.Track[0].YoutubeURL,
-	}
-	trackChannel <- resp
+	trackChannel <- track
 }
 
 func GetBandInfo(nameBand string, wg *sync.WaitGroup, bandChannel chan *ResponseBand) {
