@@ -44,32 +44,31 @@ func renderReview(text string) string {
 			<p class="mt-2 text-justify">` + text + `</p>`
 }
 
-func renderTrackInfo(trackInfo []string) string {
-	if len(trackInfo) == 0 {
+func renderTrackInfo(trackInfo *client.ResponseTrack) string {
+	if trackInfo.Track[0].Description == "" {
 		return ""
 	}
-
-	text := trackInfo[0]
-	videoURL := trackInfo[1]
-	thumb := trackInfo[2]
-
 	var resp string = ""
 
-	if text != "" {
+	if trackInfo.Track[0].Description != "" {
 
 		resp += `<p class="text-3xl mb-3">Track info</p>`
 
-		if thumb != "" {
-			resp += `<img class=" mb-3" width=150 height=150 src="` + thumb + `" />`
+		if trackInfo.Track[0].Thumb != "" {
+			resp += `<img class=" mb-3" width=150 height=150 src="` + trackInfo.Track[0].Thumb + `" />`
 		}
 
-		resp += `<p class="text-justify mt-3">` + text + `</p>`
+		resp += `<p class="text-justify mt-3">` + trackInfo.Track[0].Description + `</p>`
 
-		if videoURL != "" {
+		if trackInfo.Track[0].YoutubeURL != "" {
+			idVideo := strings.Split(trackInfo.Track[0].YoutubeURL, "v=")[1]
+
 			resp += `
 			<div class="flex-col space-x-4 mt-10">
-				<iframe width="560" height="315" src="https://www.youtube.com/embed/` + videoURL + `" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>	
+				<iframe width="560" height="315" src="https://www.youtube.com/embed/` + idVideo + `" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>	
 			</div>
+
+			<p class="mt-2"><a class="text-blue-400" target="blank" href="` + trackInfo.Track[0].YoutubeURL + `">` + trackInfo.Track[0].YoutubeURL + `</a></p>
 			`
 		}
 	}
@@ -144,7 +143,7 @@ func main() {
 	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 	albumInfo := <-albumChannel
 
-	trackChannel := make(chan []string)
+	trackChannel := make(chan *client.ResponseTrack)
 	go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
 	trackInfo := <-trackChannel
 
@@ -172,7 +171,7 @@ func main() {
 				` + renderHeader(albumInfo) + `
 				
 			</div>
-			
+
 			<!-- action buttons -->
 			<div class="mt-6 flex justify-between">
 				<div class="flex">
@@ -183,7 +182,6 @@ func main() {
 
 			<div class="container mt-10 ">
 				<p class="text-3xl">Album description</p>
-
 				<p id="wrapper-album-description" class="mt-2 text-justify">
 					` + albumInfo.Album[0].Description + `
 				</p>
@@ -200,7 +198,7 @@ func main() {
 			<div class="container mt-10 ">
 				<p class="text-3xl">Band/Artist images</p>
 
-				<div class="flex overflow-x-scroll mt-4">
+				<div id="wrapper-artist-images" class="flex overflow-x-scroll mt-4">
 					` + renderBandAlbumImages(*items) + `
 		
 				</div>
@@ -219,6 +217,7 @@ func main() {
 			var wrapperAlbumReview = document.getElementById('wrapper-album-review');
 			var wrapperAlbumTrack = document.getElementById('wrapper-album-track');
 			var wrapperArtistBio = document.getElementById('wrapper-artist-bio');
+			var wrapperArtistImages = document.getElementById('wrapper-artist-images');
 
 			refresh().then( (data) => { 
 				console.log(data)
@@ -230,6 +229,7 @@ func main() {
 				wrapperAlbumReview.innerHTML = data.review;
 				wrapperAlbumTrack.innerHTML = data.track;
 				wrapperArtistBio.innerHTML = data.bio;
+				wrapperArtistImages.innerHTML = data.artistImages;
 
 			})
 		})
@@ -256,7 +256,7 @@ func main() {
 		go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 		albumInfo := <-albumChannel
 
-		trackChannel := make(chan []string)
+		trackChannel := make(chan *client.ResponseTrack)
 		go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
 		trackInfo := <-trackChannel
 
@@ -272,6 +272,9 @@ func main() {
 		track := renderTrackInfo(trackInfo)
 		bio := renderBio(bandInfo)
 
+		items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
+		artistImages := renderBandAlbumImages(*items)
+
 		n := map[string]string{
 			"title":            title,
 			"header":           header,
@@ -279,6 +282,7 @@ func main() {
 			"review":           review,
 			"track":            track,
 			"bio":              bio,
+			"artistImages":     artistImages,
 		}
 		return n
 	})
