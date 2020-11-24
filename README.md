@@ -22,11 +22,9 @@ $ chmod +x spotify-info-linux
 $ ./spotify-info-linux
 ```
 
-![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-14-34.png)
+![](https://i.ibb.co/55FsC6h/ui-1.png)
 
-
-
-![](https://raw.githubusercontent.com/ernesto27/album-info-spotify/main/screenshots/Screenshot%20from%202020-11-15%2020-14-55.png)
+![](https://i.ibb.co/TtczPNW/ui-2.png)
 
 
 
