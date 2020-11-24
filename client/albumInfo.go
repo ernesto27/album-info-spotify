@@ -96,23 +96,15 @@ func GetTrackInfo(nameBand string, trackName string, wg *sync.WaitGroup, trackCh
 	trackChannel <- resp
 }
 
-func GetBandInfo(nameBand string, wg *sync.WaitGroup, bandChannel chan []string) {
+func GetBandInfo(nameBand string, wg *sync.WaitGroup, bandChannel chan *ResponseBand) {
 	defer wg.Done()
 	var band = new(ResponseBand)
 	cleanInfo := cleanStrings(nameBand, "", "")
 	nameBand = cleanInfo[0]
 	fmt.Println(apiURL + "search.php?s=" + nameBand)
 	getJson(apiURL+"search.php?s="+nameBand, band)
-	// if len(band.Band) == 0 {
-	// 	return []string{}, errors.New("Band not found")
-	// }
-	resp := []string{
-		band.Band[0].Biograhpy,
-		band.Band[0].FormedYear,
-		band.Band[0].Country,
-	}
 
-	bandChannel <- resp
+	bandChannel <- band
 }
 
 func cleanStrings(nameBand string, albumBand string, trackName string) []string {
