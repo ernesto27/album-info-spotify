@@ -198,11 +198,19 @@ func main() {
 			<div class="mt-6 flex justify-between">
 				<div class="flex">
 					<button id="refresh-data" class="mr-2 bg-green-500 text-green-100 block py-2 px-8 rounded-full">Refresh data</button>
-
 				</div>
 			</div>
 
+			<img
+				id="loading"
+				class="mt-3 ml-2"
+				width="20"
+				height="20" 
+				style="display:none"
+				src="https://lh3.googleusercontent.com/proxy/3KWs8u6xgjfLVf0o2ilfBvNbbxJGQwkP2Dqjjq3Rpn9ZgvnX61Yrp8s4JtukCcIkwc0q7lmVtSS0dBNm5E-o8wHbkBS7vEMoS5yhTRocFyIyyTTjmJ32GY9hXyHdAL1cQVBN6KQRBTouKfTmvjE-CHiUfSNnNoUI-VFlrg" />
+
 			<div class="container mt-10 ">
+					
 				<p class="text-3xl">Album description</p>
 				<p id="wrapper-album-description" class="mt-2 text-justify">
 					` + descriptionAlbum + `
@@ -240,7 +248,10 @@ func main() {
 			var wrapperAlbumTrack = document.getElementById('wrapper-album-track');
 			var wrapperArtistBio = document.getElementById('wrapper-artist-bio');
 			var wrapperArtistImages = document.getElementById('wrapper-artist-images');
+			var loading = document.getElementById('loading');
 
+			loading.style.display = 'block';
+		
 			refresh().then( (data) => { 
 				console.log(data)
 
@@ -252,6 +263,8 @@ func main() {
 				wrapperAlbumTrack.innerHTML = data.track;
 				wrapperArtistBio.innerHTML = data.bio;
 				wrapperArtistImages.innerHTML = data.artistImages;
+				
+				loading.style.display = 'none';
 
 			})
 		})
