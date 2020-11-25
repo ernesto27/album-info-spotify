@@ -91,7 +91,11 @@ func GetBandInfo(nameBand string, wg *sync.WaitGroup, bandChannel chan *Response
 }
 
 func cleanStrings(nameBand string, albumBand string, trackName string) []string {
+	trackRegexp := regexp.MustCompile("- Remastered [0-9]+")
+	trackName = trackRegexp.ReplaceAllString(trackName, "")
+
 	trackName = strings.ReplaceAll(trackName, " ", "%20")
+	trackName = strings.Trim(trackName, "%20")
 	nameBand = strings.ReplaceAll(nameBand, " ", "%20")
 	albumBand = strings.ReplaceAll(albumBand, " ", "%20")
 

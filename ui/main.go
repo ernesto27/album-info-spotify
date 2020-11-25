@@ -14,17 +14,26 @@ import (
 
 func renderTitle(albumInfo *client.ResponseAlbum) string {
 	var resp string = ""
-	resp += albumInfo.Album[0].Artist + ` - ` + albumInfo.Album[0].Name
+
+	if len(albumInfo.Album) > 0 {
+		resp += albumInfo.Album[0].Artist + ` - ` + albumInfo.Album[0].Name
+	} else {
+		resp += "Album info spotify"
+	}
 	return resp
 }
 
 func renderHeader(albumInfo *client.ResponseAlbum) string {
-	resp := renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
-	<div class="flex flex-col justify-center">
-		<!-- content -->
-		<h4 class="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">Album metadata spotify</h4>
-		` + renderAlbumMetadata(albumInfo) + `
-	</div>`
+	var resp string = ""
+
+	if len(albumInfo.Album) > 0 {
+		resp = renderImage(albumInfo.Album[0].ThumbFront) + renderImage(albumInfo.Album[0].ThumbBack) + renderImage(albumInfo.Album[0].ThumbCD) + `
+		<div class="flex flex-col justify-center">
+			<!-- content -->
+			<h4 class="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">Album metadata spotify</h4>
+			` + renderAlbumMetadata(albumInfo) + `
+		</div>`
+	}
 	return resp
 }
 
@@ -35,24 +44,25 @@ func renderImage(imageURL string) string {
 	return `<img src="` + imageURL + `" width="230" height="200" class="mr-6">`
 }
 
-func renderReview(text string) string {
-	if text == "" {
-		return ""
+func renderReview(albumInfo *client.ResponseAlbum) string {
+	var resp string = ""
+
+	if len(albumInfo.Album) > 0 {
+		resp += `<p class="text-3xl">Review album</p>
+				<p class="mt-2 text-justify">` + albumInfo.Album[0].Review + `</p>`
 	}
 
-	return `<p class="text-3xl">Review album</p>
-			<p class="mt-2 text-justify">` + text + `</p>`
+	return resp
 }
 
 func renderTrackInfo(trackInfo *client.ResponseTrack) string {
-	if trackInfo.Track[0].Description == "" {
-		return ""
-	}
 	var resp string = ""
 
-	if trackInfo.Track[0].Description != "" {
+	if len(trackInfo.Track) > 0 {
 
-		resp += `<p class="text-3xl mb-3">Track info</p>`
+		if trackInfo.Track[0].Description != "" {
+			resp += `<p class="text-3xl mb-3">Track info</p>`
+		}
 
 		if trackInfo.Track[0].Thumb != "" {
 			resp += `<img class=" mb-3" width=150 height=150 src="` + trackInfo.Track[0].Thumb + `" />`
@@ -112,12 +122,15 @@ func renderBandAlbumImages(items client.Items) string {
 
 func renderBio(bandInfo *client.ResponseBand) string {
 	var resp string = ""
-	resp += `<p class="text-3xl">BIO</p>
-				<p class="mt-2 text-justify">
-					` + bandInfo.Band[0].Biograhpy + `
-				</p>
+	if len(bandInfo.Band) > 0 {
+		resp += `<p class="text-3xl">BIO</p>
+					<p class="mt-2 text-justify">
+						` + bandInfo.Band[0].Biograhpy + `
+					</p>
 
-				<p class="mt-3">Form year: ` + bandInfo.Band[0].FormedYear + `</p>`
+					<p class="mt-3">Form year: ` + bandInfo.Band[0].FormedYear + `</p>`
+	}
+
 	return resp
 }
 
@@ -154,7 +167,16 @@ func main() {
 	wg.Wait()
 
 	// Get images from album, band
-	items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
+	var year string
+	if len(albumInfo.Album) > 0 {
+		year = albumInfo.Album[0].ReleaseYear
+	}
+	items := client.GetImagesBand(artistName, year)
+
+	var descriptionAlbum string = ""
+	if len(albumInfo.Album) > 0 {
+		descriptionAlbum = albumInfo.Album[0].Description
+	}
 
 	htmlBody := `
 	<html>
@@ -183,12 +205,12 @@ func main() {
 			<div class="container mt-10 ">
 				<p class="text-3xl">Album description</p>
 				<p id="wrapper-album-description" class="mt-2 text-justify">
-					` + albumInfo.Album[0].Description + `
+					` + descriptionAlbum + `
 				</p>
 			</div>
 
 			<div id="wrapper-album-review" class="container mt-10 ">
-			` + renderReview(albumInfo.Album[0].Review) + `
+			` + renderReview(albumInfo) + `
 			</div>
 
 			<div id="wrapper-album-track" class="container mt-10 ">
@@ -268,17 +290,26 @@ func main() {
 
 		title := renderTitle(albumInfo)
 		header := renderHeader(albumInfo)
-		review := renderReview(albumInfo.Album[0].Review)
+		review := renderReview(albumInfo)
 		track := renderTrackInfo(trackInfo)
 		bio := renderBio(bandInfo)
 
-		items := client.GetImagesBand(artistName, albumInfo.Album[0].ReleaseYear)
+		var year string
+		if len(albumInfo.Album) > 0 {
+			year = albumInfo.Album[0].ReleaseYear
+		}
+		items := client.GetImagesBand(artistName, year)
 		artistImages := renderBandAlbumImages(*items)
+
+		var descriptionAlbum string = ""
+		if len(albumInfo.Album) > 0 {
+			descriptionAlbum = albumInfo.Album[0].Description
+		}
 
 		n := map[string]string{
 			"title":            title,
 			"header":           header,
-			"albumDescription": albumInfo.Album[0].Description,
+			"albumDescription": descriptionAlbum,
 			"review":           review,
 			"track":            track,
 			"bio":              bio,
