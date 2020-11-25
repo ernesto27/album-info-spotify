@@ -151,19 +151,24 @@ func main() {
 		panic("No album type")
 	}
 
-	wg.Add(3)
+	wg.Add(4)
 	albumChannel := make(chan *client.ResponseAlbum)
 	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
-	albumInfo := <-albumChannel
 
 	trackChannel := make(chan *client.ResponseTrack)
 	go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
-	trackInfo := <-trackChannel
 
 	bandChannel := make(chan *client.ResponseBand)
 	go client.GetBandInfo(artistName, &wg, bandChannel)
-	bandInfo := <-bandChannel
 
+	// Get wikipedia page
+	wikipediaLinkChannel := make(chan *client.Items)
+	go client.GetWikipediaLink(artistName, meta.AlbumName, &wg, wikipediaLinkChannel)
+
+	albumInfo := <-albumChannel
+	trackInfo := <-trackChannel
+	bandInfo := <-bandChannel
+	wikipediaLink := <-wikipediaLinkChannel
 	wg.Wait()
 
 	// Get images from album, band
@@ -215,10 +220,19 @@ func main() {
 				<p id="wrapper-album-description" class="mt-2 text-justify">
 					` + descriptionAlbum + `
 				</p>
+
 			</div>
 
 			<div id="wrapper-album-review" class="container mt-10 ">
 			` + renderReview(albumInfo) + `
+			</div>
+
+			<div class="container mt-10 ">
+				<iframe
+				class="mt-4"
+				width="100%"
+				height="300" 
+				src="` + wikipediaLink.Images[0].Link + `" />
 			</div>
 
 			<div id="wrapper-album-track" class="container mt-10 ">
