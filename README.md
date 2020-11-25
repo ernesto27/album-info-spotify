@@ -1,6 +1,6 @@
 # Album info spotify
 
-This is a simple command line app that shows info of the current playing album listen on spotify desktop app, also have the possibility to search info by enter artistsName and albumName by hand
+This is a Desktop app that shows info of the current playing album listen on spotify desktop app, also have the possibility to search info by enter artistsName and albumName by hand
 
 ## Install
 NOTE: Works on ubuntu and MacOS.
