@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	googlesearch "github.com/rocketlaunchr/google-search"
 	"github.com/zserge/lorca"
 )
 
@@ -134,6 +135,19 @@ func renderBio(bandInfo *client.ResponseBand) string {
 	return resp
 }
 
+func renderWikipediaPage(wikipediaPage []googlesearch.Result) string {
+	var resp string = ""
+	resp += `<iframe
+			id="iframe-wikipedia"
+			class="mt-4"
+			width="100%"
+			height="700" 
+			style="display:none"
+			src="` + wikipediaPage[0].URL + `">
+		</iframe>`
+	return resp
+}
+
 var wg sync.WaitGroup
 
 func main() {
@@ -151,7 +165,7 @@ func main() {
 		panic("No album type")
 	}
 
-	wg.Add(4)
+	wg.Add(3)
 	albumChannel := make(chan *client.ResponseAlbum)
 	go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
 
@@ -161,14 +175,10 @@ func main() {
 	bandChannel := make(chan *client.ResponseBand)
 	go client.GetBandInfo(artistName, &wg, bandChannel)
 
-	// Get wikipedia page
-	wikipediaLinkChannel := make(chan *client.Items)
-	go client.GetWikipediaLink(artistName, meta.AlbumName, &wg, wikipediaLinkChannel)
-
 	albumInfo := <-albumChannel
 	trackInfo := <-trackChannel
 	bandInfo := <-bandChannel
-	wikipediaLink := <-wikipediaLinkChannel
+
 	wg.Wait()
 
 	// Get images from album, band
@@ -181,6 +191,11 @@ func main() {
 	var descriptionAlbum string = ""
 	if len(albumInfo.Album) > 0 {
 		descriptionAlbum = albumInfo.Album[0].Description
+	}
+
+	wikipediaPage, err := client.GetWikipediaLink(artistName, meta.AlbumName)
+	if err != nil {
+		fmt.Println("No wikipedia page found")
 	}
 
 	htmlBody := `
@@ -209,10 +224,10 @@ func main() {
 			<img
 				id="loading"
 				class="mt-3 ml-2"
-				width="20"
-				height="20" 
+				width="50"
+				height="50" 
 				style="display:none"
-				src="https://lh3.googleusercontent.com/proxy/3KWs8u6xgjfLVf0o2ilfBvNbbxJGQwkP2Dqjjq3Rpn9ZgvnX61Yrp8s4JtukCcIkwc0q7lmVtSS0dBNm5E-o8wHbkBS7vEMoS5yhTRocFyIyyTTjmJ32GY9hXyHdAL1cQVBN6KQRBTouKfTmvjE-CHiUfSNnNoUI-VFlrg" />
+				src="https://apptimize.com/wp-content/uploads/2015/10/Ajax-loader.gif" />
 
 			<div class="container mt-10 ">
 					
@@ -228,11 +243,10 @@ func main() {
 			</div>
 
 			<div class="container mt-10 ">
-				<iframe
-				class="mt-4"
-				width="100%"
-				height="300" 
-				src="` + wikipediaLink.Images[0].Link + `" />
+				<a class="underline" id="toggle-wikipedia" href="#">Show/hide wikipedia page</a>
+				<div id="wrapper-wikipedia">	
+				` + renderWikipediaPage(wikipediaPage) + ` 
+				</div>
 			</div>
 
 			<div id="wrapper-album-track" class="container mt-10 ">
@@ -244,7 +258,6 @@ func main() {
 
 				<div id="wrapper-artist-images" class="flex overflow-x-scroll mt-4">
 					` + renderBandAlbumImages(*items) + `
-		
 				</div>
 			</div>
 
@@ -254,16 +267,29 @@ func main() {
 		</div>
 
 		<script>
+
+		var toggleWikipedia = document.getElementById('toggle-wikipedia');
+		toggleWikipedia.addEventListener('click', function(e) {
+			e.preventDefault();
+			var iframeWikipedia = document.getElementById("iframe-wikipedia");
+			if(iframeWikipedia.style.display === 'block') {
+				iframeWikipedia.style.display = 'none';
+			} else {
+				iframeWikipedia.style.display = 'block';
+
+			}
+		});
+
+		var wrapperHeader = document.getElementById('wrapper-header');
+		var wrapperAlbumDescription = document.getElementById('wrapper-album-description');
+		var wrapperAlbumReview = document.getElementById('wrapper-album-review');
+		var wrapperAlbumTrack = document.getElementById('wrapper-album-track');
+		var wrapperArtistBio = document.getElementById('wrapper-artist-bio');
+		var wrapperArtistImages = document.getElementById('wrapper-artist-images');
+		var loading = document.getElementById('loading');
+		var wrapperWikipedia = document.getElementById('wrapper-wikipedia');
+
 		document.getElementById('refresh-data').addEventListener('click', function(){
-
-			var wrapperHeader = document.getElementById('wrapper-header');
-			var wrapperAlbumDescription = document.getElementById('wrapper-album-description');
-			var wrapperAlbumReview = document.getElementById('wrapper-album-review');
-			var wrapperAlbumTrack = document.getElementById('wrapper-album-track');
-			var wrapperArtistBio = document.getElementById('wrapper-artist-bio');
-			var wrapperArtistImages = document.getElementById('wrapper-artist-images');
-			var loading = document.getElementById('loading');
-
 			loading.style.display = 'block';
 		
 			refresh().then( (data) => { 
@@ -277,10 +303,13 @@ func main() {
 				wrapperAlbumTrack.innerHTML = data.track;
 				wrapperArtistBio.innerHTML = data.bio;
 				wrapperArtistImages.innerHTML = data.artistImages;
+				wrapperWikipedia.innerHTML = data.wikipedia;
 				
 				loading.style.display = 'none';
 
-			})
+			}); 
+
+
 		})
 		</script>
 	</body>
@@ -333,6 +362,13 @@ func main() {
 			descriptionAlbum = albumInfo.Album[0].Description
 		}
 
+		wikipediaPage, err := client.GetWikipediaLink(artistName, meta.AlbumName)
+		if err != nil {
+			fmt.Println("No wikipedia page found")
+		}
+
+		wikipediaHTML := renderWikipediaPage(wikipediaPage)
+
 		n := map[string]string{
 			"title":            title,
 			"header":           header,
@@ -341,6 +377,7 @@ func main() {
 			"track":            track,
 			"bio":              bio,
 			"artistImages":     artistImages,
+			"wikipedia":        wikipediaHTML,
 		}
 		return n
 	})

@@ -1,14 +1,15 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
+	googlesearch "github.com/rocketlaunchr/google-search"
 )
 
 type Image struct {
@@ -51,35 +52,9 @@ func GetImagesBand(artistName string, year string) *Items {
 
 }
 
-func GetWikipediaLink(nameBand string, albumBand string, wg *sync.WaitGroup, wikipediaLinkChannel chan *Items) {
-	defer wg.Done()
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+func GetWikipediaLink(nameBand string, albumBand string) ([]googlesearch.Result, error) {
 
-	req, err := http.NewRequest("GET", "https://www.googleapis.com/customsearch/v1", nil)
-	if err != nil {
-		log.Print(err)
-	}
+	ctx := context.Background()
+	return googlesearch.Search(ctx, nameBand+" "+albumBand+" wikipedia")
 
-	q := req.URL.Query()
-	q.Add("key", os.Getenv("GOOGLE_SEARCH_APIKEY"))
-	q.Add("cx", os.Getenv("GOOGLE_SEARCH_CX"))
-	q.Add("q", nameBand+" "+albumBand+" wikipedia")
-
-	req.URL.RawQuery = q.Encode()
-
-	var myClient = &http.Client{Timeout: 10 * time.Second}
-	r, err := myClient.Get(req.URL.String())
-	if err != nil {
-		panic(err)
-	}
-	defer r.Body.Close()
-	var items = new(Items)
-	json.NewDecoder(r.Body).Decode(items)
-
-	// fmt.Println(items)
-
-	wikipediaLinkChannel <- items
 }
