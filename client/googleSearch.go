@@ -1,14 +1,15 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/joho/godotenv"
+	googlesearch "github.com/rocketlaunchr/google-search"
 )
 
 type Image struct {
@@ -47,7 +48,13 @@ func GetImagesBand(artistName string, year string) *Items {
 	var items = new(Items)
 	json.NewDecoder(r.Body).Decode(items)
 
-	fmt.Println(items)
 	return items
+
+}
+
+func GetWikipediaLink(nameBand string, albumBand string) ([]googlesearch.Result, error) {
+
+	ctx := context.Background()
+	return googlesearch.Search(ctx, nameBand+" "+albumBand+" wikipedia")
 
 }
