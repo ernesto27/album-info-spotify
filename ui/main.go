@@ -201,6 +201,7 @@ func main() {
 	htmlBody := `
 	<html>
 	<title>` + renderTitle(albumInfo) + `</title>
+	<meta charset="UTF-8">
 	<head>
 		<link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
 
