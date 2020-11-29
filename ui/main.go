@@ -208,7 +208,17 @@ func main() {
 	</head>
 	<body>
 		<div class="bg-black text-gray-300 min-h-screen p-10">
-	
+
+			<div class="mb-4">
+				<h1 class="block w-full text-white mb-2">CUSTOM SEARCH</h1>
+				<input class="border py-2 px-3 text-black mr-2"  id="input-artist" type="search" placeholder="Artist name">
+				<input class="border py-2 px-3 text-black mr-2"  id="input-album" type="search" placeholder="Album name">
+
+				<button id="btn-custom-search" class="mr-2 bg-green-500 text-green-100 py-2 px-8 rounded-full">SEARCH</button>
+			</div>
+
+			<br />
+
 			<!-- header -->
 			<div id="wrapper-header" class="flex">
 				` + renderHeader(albumInfo) + `
@@ -292,12 +302,9 @@ func main() {
 
 		document.getElementById('refresh-data').addEventListener('click', function(){
 			loading.style.display = 'block';
-		
+			
 			refresh().then( (data) => { 
-				console.log(data)
-
 				document.title = data.title;
-
 				wrapperHeader.innerHTML = data.header;
 				wrapperAlbumDescription.innerHTML = data.albumDescription;
 				wrapperAlbumReview.innerHTML = data.review;
@@ -309,9 +316,31 @@ func main() {
 				loading.style.display = 'none';
 
 			}); 
+		});
+		
+		document.getElementById('btn-custom-search').addEventListener('click', function() {
+			loading.style.display = 'block';
 
+			var artistName = document.getElementById('input-artist');
+			var albumName = document.getElementById('input-album');
 
-		})
+			customSearch(artistName.value, albumName.value).then( (data) => {
+				document.title = data.title;
+				wrapperHeader.innerHTML = data.header;
+				wrapperAlbumDescription.innerHTML = data.albumDescription;
+				wrapperAlbumReview.innerHTML = data.review;
+				wrapperAlbumTrack.innerHTML = data.track;
+				wrapperArtistBio.innerHTML = data.bio;
+				wrapperArtistImages.innerHTML = data.artistImages;
+				wrapperWikipedia.innerHTML = data.wikipedia;
+				
+				loading.style.display = 'none';
+
+				artistName.value = '';
+				albumName.value = '';
+			}); 
+		});
+
 		</script>
 	</body>
 	</html>
@@ -326,63 +355,70 @@ func main() {
 			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
 			log.Fatalf("failed getting metadata, err: %s", err.Error())
 		}
-
 		artistName := meta.ArtistName[0]
+		return getArtistInfo(artistName, meta.AlbumName, meta.TrackName)
+	})
 
-		wg.Add(3)
-
-		albumChannel := make(chan *client.ResponseAlbum)
-		go client.GetAlbumInfo(artistName, meta.AlbumName, &wg, albumChannel)
-		albumInfo := <-albumChannel
-
-		trackChannel := make(chan *client.ResponseTrack)
-		go client.GetTrackInfo(artistName, meta.TrackName, &wg, trackChannel)
-		trackInfo := <-trackChannel
-
-		// bandChannel := make(chan []string)
-		go client.GetBandInfo(artistName, &wg, bandChannel)
-		bandInfo := <-bandChannel
-
-		wg.Wait()
-
-		title := renderTitle(albumInfo)
-		header := renderHeader(albumInfo)
-		review := renderReview(albumInfo)
-		track := renderTrackInfo(trackInfo)
-		bio := renderBio(bandInfo)
-
-		var year string
-		if len(albumInfo.Album) > 0 {
-			year = albumInfo.Album[0].ReleaseYear
-		}
-		items := client.GetImagesBand(artistName, year)
-		artistImages := renderBandAlbumImages(*items)
-
-		var descriptionAlbum string = ""
-		if len(albumInfo.Album) > 0 {
-			descriptionAlbum = albumInfo.Album[0].Description
-		}
-
-		wikipediaPage, err := client.GetWikipediaLink(artistName, meta.AlbumName)
-		if err != nil {
-			fmt.Println("No wikipedia page found")
-		}
-
-		wikipediaHTML := renderWikipediaPage(wikipediaPage)
-
-		n := map[string]string{
-			"title":            title,
-			"header":           header,
-			"albumDescription": descriptionAlbum,
-			"review":           review,
-			"track":            track,
-			"bio":              bio,
-			"artistImages":     artistImages,
-			"wikipedia":        wikipediaHTML,
-		}
-		return n
+	ui.Bind("customSearch", func(artistName string, albumName string) map[string]string {
+		return getArtistInfo(artistName, albumName, "")
 	})
 
 	// Wait until UI window is closed
 	<-ui.Done()
+}
+
+func getArtistInfo(artistName string, albumName string, trackName string) map[string]string {
+	wg.Add(3)
+
+	albumChannel := make(chan *client.ResponseAlbum)
+	go client.GetAlbumInfo(artistName, albumName, &wg, albumChannel)
+
+	trackChannel := make(chan *client.ResponseTrack)
+	go client.GetTrackInfo(artistName, trackName, &wg, trackChannel)
+
+	bandChannel := make(chan *client.ResponseBand)
+	go client.GetBandInfo(artistName, &wg, bandChannel)
+
+	albumInfo := <-albumChannel
+	bandInfo := <-bandChannel
+	trackInfo := <-trackChannel
+
+	wg.Wait()
+
+	title := renderTitle(albumInfo)
+	header := renderHeader(albumInfo)
+	review := renderReview(albumInfo)
+	track := renderTrackInfo(trackInfo)
+	bio := renderBio(bandInfo)
+
+	var year string
+	if len(albumInfo.Album) > 0 {
+		year = albumInfo.Album[0].ReleaseYear
+	}
+	items := client.GetImagesBand(artistName, year)
+	artistImages := renderBandAlbumImages(*items)
+
+	var descriptionAlbum string = ""
+	if len(albumInfo.Album) > 0 {
+		descriptionAlbum = albumInfo.Album[0].Description
+	}
+
+	wikipediaPage, err := client.GetWikipediaLink(artistName, albumName)
+	if err != nil {
+		fmt.Println("No wikipedia page found")
+	}
+
+	wikipediaHTML := renderWikipediaPage(wikipediaPage)
+
+	n := map[string]string{
+		"title":            title,
+		"header":           header,
+		"albumDescription": descriptionAlbum,
+		"review":           review,
+		"track":            track,
+		"bio":              bio,
+		"artistImages":     artistImages,
+		"wikipedia":        wikipediaHTML,
+	}
+	return n
 }
