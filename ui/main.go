@@ -148,6 +148,16 @@ func renderWikipediaPage(wikipediaPage []googlesearch.Result) string {
 	return resp
 }
 
+func renderNotFound(flag string) string {
+	var resp string = ""
+	if flag == "" {
+		resp += `<div>
+					<p class="block text-4xl text-white mb-2">NOT FOUND DATA</p>
+				</div>`
+	}
+	return resp
+}
+
 var wg sync.WaitGroup
 
 func main() {
@@ -157,12 +167,9 @@ func main() {
 		log.Fatalf("failed getting metadata, err: %s", err.Error())
 	}
 
-	artistName := meta.ArtistName[0]
-
-	if artistName == "" {
-		// Not type music album
-		// TODO SHOW OTHER VIEW
-		panic("No album type")
+	var artistName string = ""
+	if len(meta.ArtistName) > 0 {
+		artistName = meta.ArtistName[0]
 	}
 
 	wg.Add(3)
@@ -209,7 +216,7 @@ func main() {
 	<body>
 		<div class="bg-black text-gray-300 min-h-screen p-10">
 
-			<div class="mb-4">
+			<div class="mb-5">
 				<h1 class="block w-full text-white mb-2">CUSTOM SEARCH</h1>
 				<input class="border py-2 px-3 text-black mr-2"  id="input-artist" type="search" placeholder="Artist name">
 				<input class="border py-2 px-3 text-black mr-2"  id="input-album" type="search" placeholder="Album name">
@@ -217,7 +224,10 @@ func main() {
 				<button id="btn-custom-search" class="mr-2 bg-green-500 text-green-100 py-2 px-8 rounded-full">SEARCH</button>
 			</div>
 
-			<br />
+	
+			<div id="wrapper-not-found">
+				` + renderNotFound(artistName) + `
+			</div>
 
 			<!-- header -->
 			<div id="wrapper-header" class="flex">
@@ -240,40 +250,41 @@ func main() {
 				style="display:none"
 				src="https://apptimize.com/wp-content/uploads/2015/10/Ajax-loader.gif" />
 
-			<div class="container mt-10 ">
-					
-				<p class="text-3xl">Album description</p>
-				<p id="wrapper-album-description" class="mt-2 text-justify">
-					` + descriptionAlbum + `
-				</p>
+			<div id="wrapper-data">
+				<div class="container mt-10 ">
+					<p class="text-3xl">Album description</p>
+					<p id="wrapper-album-description" class="mt-2 text-justify">
+						` + descriptionAlbum + `
+					</p>
 
-			</div>
-
-			<div id="wrapper-album-review" class="container mt-10 ">
-			` + renderReview(albumInfo) + `
-			</div>
-
-			<div class="container mt-10 ">
-				<a class="underline" id="toggle-wikipedia" href="#">Show/hide wikipedia page</a>
-				<div id="wrapper-wikipedia">	
-				` + renderWikipediaPage(wikipediaPage) + ` 
 				</div>
-			</div>
 
-			<div id="wrapper-album-track" class="container mt-10 ">
-			` + renderTrackInfo(trackInfo) + `
-			</div>
-
-			<div class="container mt-10 ">
-				<p class="text-3xl">Band/Artist images</p>
-
-				<div id="wrapper-artist-images" class="flex overflow-x-scroll mt-4">
-					` + renderBandAlbumImages(*items) + `
+				<div id="wrapper-album-review" class="container mt-10 ">
+				` + renderReview(albumInfo) + `
 				</div>
-			</div>
 
-			<div id="wrapper-artist-bio"  class="container mt-10 ">
-				` + renderBio(bandInfo) + `
+				<div class="container mt-10 ">
+					<a class="underline" id="toggle-wikipedia" href="#">Show/hide wikipedia page</a>
+					<div id="wrapper-wikipedia">	
+					` + renderWikipediaPage(wikipediaPage) + ` 
+					</div>
+				</div>
+
+				<div id="wrapper-album-track" class="container mt-10 ">
+				` + renderTrackInfo(trackInfo) + `
+				</div>
+
+				<div class="container mt-10 ">
+					<p class="text-3xl">Band/Artist images</p>
+
+					<div id="wrapper-artist-images" class="flex overflow-x-scroll mt-4">
+						` + renderBandAlbumImages(*items) + `
+					</div>
+				</div>
+
+				<div id="wrapper-artist-bio"  class="container mt-10 ">
+					` + renderBio(bandInfo) + `
+				</div>
 			</div>
 		</div>
 
@@ -299,20 +310,14 @@ func main() {
 		var wrapperArtistImages = document.getElementById('wrapper-artist-images');
 		var loading = document.getElementById('loading');
 		var wrapperWikipedia = document.getElementById('wrapper-wikipedia');
+		var wrapperNotFound = document.getElementById('wrapper-not-found');
+		var wrapperData = document.getElementById('wrapper-data');
 
 		document.getElementById('refresh-data').addEventListener('click', function(){
 			loading.style.display = 'block';
 			
 			refresh().then( (data) => { 
-				document.title = data.title;
-				wrapperHeader.innerHTML = data.header;
-				wrapperAlbumDescription.innerHTML = data.albumDescription;
-				wrapperAlbumReview.innerHTML = data.review;
-				wrapperAlbumTrack.innerHTML = data.track;
-				wrapperArtistBio.innerHTML = data.bio;
-				wrapperArtistImages.innerHTML = data.artistImages;
-				wrapperWikipedia.innerHTML = data.wikipedia;
-				
+				setValues(data);
 				loading.style.display = 'none';
 
 			}); 
@@ -324,22 +329,32 @@ func main() {
 			var artistName = document.getElementById('input-artist');
 			var albumName = document.getElementById('input-album');
 
-			customSearch(artistName.value, albumName.value).then( (data) => {
-				document.title = data.title;
-				wrapperHeader.innerHTML = data.header;
-				wrapperAlbumDescription.innerHTML = data.albumDescription;
-				wrapperAlbumReview.innerHTML = data.review;
-				wrapperAlbumTrack.innerHTML = data.track;
-				wrapperArtistBio.innerHTML = data.bio;
-				wrapperArtistImages.innerHTML = data.artistImages;
-				wrapperWikipedia.innerHTML = data.wikipedia;
-				
+			customSearch(artistName.value, albumName.value).then( (data) => {	
+				setValues(data);
 				loading.style.display = 'none';
 
 				artistName.value = '';
 				albumName.value = '';
 			}); 
 		});
+
+		function setValues(data) {
+			document.title = data.title;
+			wrapperHeader.innerHTML = data.header;
+			wrapperAlbumDescription.innerHTML = data.albumDescription;
+			wrapperAlbumReview.innerHTML = data.review;
+			wrapperAlbumTrack.innerHTML = data.track;
+			wrapperArtistBio.innerHTML = data.bio;
+			wrapperArtistImages.innerHTML = data.artistImages;
+			wrapperWikipedia.innerHTML = data.wikipedia;
+			wrapperNotFound.innerHTML = data.notFound;
+
+
+		}
+
+		window.onload = function() {
+
+		}
 
 		</script>
 	</body>
@@ -355,7 +370,11 @@ func main() {
 			fmt.Println("Seems that you don't have the spotify app desktop installed  or is not open :(")
 			log.Fatalf("failed getting metadata, err: %s", err.Error())
 		}
-		artistName := meta.ArtistName[0]
+		var artistName string = ""
+		if len(meta.ArtistName) > 0 {
+			artistName = meta.ArtistName[0]
+		}
+
 		return getArtistInfo(artistName, meta.AlbumName, meta.TrackName)
 	})
 
@@ -410,7 +429,12 @@ func getArtistInfo(artistName string, albumName string, trackName string) map[st
 
 	wikipediaHTML := renderWikipediaPage(wikipediaPage)
 
-	n := map[string]string{
+	if len(bandInfo.Band) == 0 {
+		artistName = ""
+	}
+	notFound := renderNotFound(artistName)
+
+	return map[string]string{
 		"title":            title,
 		"header":           header,
 		"albumDescription": descriptionAlbum,
@@ -419,6 +443,6 @@ func getArtistInfo(artistName string, albumName string, trackName string) map[st
 		"bio":              bio,
 		"artistImages":     artistImages,
 		"wikipedia":        wikipediaHTML,
+		"notFound":         notFound,
 	}
-	return n
 }
