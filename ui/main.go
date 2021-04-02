@@ -136,14 +136,19 @@ func renderBio(bandInfo *client.ResponseBand) string {
 }
 
 func renderWikipediaPage(wikipediaPage []googlesearch.Result) string {
-	var resp string = ""
+	var resp string
+	var wikipediaSrc string
+
+	if len(wikipediaPage) > 0 {
+		wikipediaSrc = wikipediaPage[0].URL
+	}
 	resp += `<iframe
 			id="iframe-wikipedia"
 			class="mt-4"
 			width="100%"
 			height="700" 
 			style="display:none"
-			src="` + wikipediaPage[0].URL + `">
+			src="` + wikipediaSrc + `">
 		</iframe>`
 	return resp
 }
